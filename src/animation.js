@@ -14,7 +14,9 @@ const sketch = (p) => {
     let canvas = p.createCanvas(window.innerWidth, window.innerHeight);
     // Target the canvas to render inside the #transition-canvas div
     canvas.parent('transition-canvas');
-    p.background(0); // Define the colors from the image
+
+    p.background(0,0,0,0); // Define the colors from the image
+    p.clear()
     
     palette = [
       p.color(255, 0, 0),    // Red
@@ -33,27 +35,41 @@ const sketch = (p) => {
             x: p.random(p.width),
             y: p.random(p.height),
             color: p.random(palette),
-            rotation: p.random(p.TWO_PI) // Pre-calculate rotation
+            rotation: p.random(Math.random() *26) // Pre-calculate rotation
         });
     }
     
     p.noLoop(); // Disable automatic looping
 
-    ScrollTrigger.create({
-      trigger: document.body,
-      start: "top top",
-      end: "max", // Matches 100% of the maximum scrollable distance
-      scrub: 0.1,
-      onUpdate: (self) => {
-        currentStars = Math.floor(self.progress * maxStars);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: document.body,
+        start: "top top",
+        end: "+=800",
+        scrub: 0.1,
+      }
+    });
+
+    // Scrub the stars
+    tl.to({ val: 0 }, {
+      val: maxStars,
+      duration: 1,
+      ease: "none",
+      onUpdate: function() {
+        currentStars = Math.floor(this.targets()[0].val);
         p.redraw();
       }
     });
+
+    // Sequence the reveal
+    tl.set('.truth-nuke', { display: 'block' })
+      .to('.truth-nuke .flash', { opacity: 0, duration: 0.5 }, '<')
+      .set('#transition-canvas', { display: 'none' }, '<')
+      .to('.refresh', { y: '0%', duration: 0.5, ease: 'power2.out' });
   };
 
   p.draw = () => {
-
-    p.background(0); // Clear background every redraw so shapes can be "undone"
+    p.clear(); // Clear the canvas every redraw so stars can be "undone" when scrolling up
     p.stroke(0, 0);
     
     // Only draw stars up to current scroll progress
